@@ -1,8 +1,12 @@
+#!/usr/bin/env ruby
+
 # -*- encoding : utf-8 -*-
 require 'rubygems'
 require 'bundler/setup'
 require 'aws-sdk'
 require 'logger'
+require 'optparse'
+require 'pp'
 
 STACK_ID = 'bd823759-5412-4edf-8fef-0a7e89bb7052'
 
@@ -28,13 +32,11 @@ class Deployer
   attr_reader :instances
 
 
-  def initialize
+  def initialize(attributes={})
     @client = AWS::OpsWorks::Client.new({
       config: AWS.config,
-      access_key_id: 'AKIAJBMKA2XRTIMW36FA',
-      secret_access_key: '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'}
-      # access_key_id: 'AKIAJ2WH3XLYA24UTAJQ',
-      # secret_access_key: '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'}
+      access_key_id: attributes['aws_access_key_id'],
+      secret_access_key: attributes['aws_secret_access_key']}
     )
     @instances = {}
     get_servers_data
@@ -136,9 +138,39 @@ end
 
 # puts client.describe_deployments({deployment_ids: [deploy_id]})
 
-d = Deployer.new
-d.show_instances
-d.deploy
+require 'gli'
+include GLI::App
+ 
+program_desc 'Amazon OpsWorks Deployer'
+ 
+# flag [:t,:tasklist], :default_value => File.join(ENV['HOME'],'.todolist')
+ 
+pre do |global_options,command,options,args|
+  config = YAML.load_file("aws.yml")
+  $deployer = Deployer.new(config)
+end
+ 
+desc "Exibe os servidores"
+command :show do |c|
+  c.action do |global_options,options,args|
+    $deployer.show_instances
+  end
+end 
+
+desc "Executa o deploy em todos os servidores que estao online"
+command :run do |c|
+  c.action do |global_options,options,args|
+    $deployer.deploy
+  end
+end
+ 
+exit run(ARGV)
+
+# d.send(options[:command])
+
+
+
+
 # d.send "notify_newrelic"
 
 # # puts d.online_instances
