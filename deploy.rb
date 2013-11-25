@@ -70,7 +70,7 @@ class Deployer
   def deploy
     info "\e[34m" + "Iniciando o deploy" + "\e[0m"
 
-    size = (online_instances.size / 2) + 1
+    size = (online_instances.size + 1) / 2
     instances = online_instances.each_slice(size).to_a
 
     [0,1].each {|index| deploy_and_wait instances[index]}
