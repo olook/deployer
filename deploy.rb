@@ -7,10 +7,12 @@ require 'aws-sdk'
 require 'logger'
 require 'optparse'
 require 'pp'
+require 'yaml'
 
 STACK_ID = 'bd823759-5412-4edf-8fef-0a7e89bb7052'
 
 AWS.config(:logger => Logger.new($stdout), :log_formatter => AWS::Core::LogFormatter.colored)
+USER_ACCESS = YAML::load("aws.yml")
 
 class Formater
 
@@ -75,7 +77,7 @@ class Deployer
 
     [0,1].each {|index| deploy_and_wait instances[index]}
 
-    notify_newrelic
+    notify_newrelic(USER_ACCESS['aws_user'])
 
     info "\e[34m" + "Deploy concluido com sucesso" + "\e[0m"
   end
@@ -104,16 +106,14 @@ class Deployer
       }).data[:deployment_id]
     end
 
-    def notify_newrelic
+    def notify_newrelic(user)
       revision = `git ls-remote git@github.com:olook/olook.git master`.split("\t").first
-      `curl -H "x-api-key:dbf7f72258b9cf5007eb859349cfd968104d69257fe4bb6" -d "deployment[user]=Rafael" -d "deployment[application_id]=476808" -d "deployment[revision]=#{revision}" https://api.newrelic.com/deployments.xml`
+      `curl -H "x-api-key:dbf7f72258b9cf5007eb859349cfd968104d69257fe4bb6" -d "deployment[user]=#{user}" -d "deployment[application_id]=476808" -d "deployment[revision]=#{revision}" https://api.newrelic.com/deployments.xml`
     end
 
     def info text
       AWS.config.logger.info text
     end
-
-
 
 end
 
