@@ -8,7 +8,8 @@ require 'logger'
 require 'optparse'
 
 
-STACK_ID = 'bd823759-5412-4edf-8fef-0a7e89bb7052'
+STACK_ID = 'dbf5f7d3-63ed-4c8c-9e5a-e38dbcadcf75'
+APP_ID = 'a9e36137-e556-457f-ad5a-ef1e5cf4c167'
 AWS.config(:logger => Logger.new($stdout), :log_formatter => AWS::Core::LogFormatter.colored)
 
 class Formater
@@ -96,7 +97,7 @@ class Deployer
     def deploy_on instance_ids
       @client.create_deployment({
        stack_id: STACK_ID,
-       app_id: 'a1f3d439-da1d-4494-a90b-254081461120',
+       app_id: APP_ID,
        instance_ids: instance_ids,
        command: {name: 'deploy', args: {}}
       }).data[:deployment_id]
