@@ -45,6 +45,16 @@ class Deployer
     instances.select{|key, values| values[:status] == 'online'}
   end
 
+  def instances_by_layers
+    instances.inject({}) do |h, instance|
+      instance[:layer_ids].each do |layer_id|
+        h[layer_id] ||= []
+        h[layer_id].push(instance)
+      end
+      h
+    end
+  end
+
   def get_deploy_status deploy_id
     deployment = @client.describe_deployments({deployment_ids: [deploy_id]}).data[:deployments].first
     deployment[:status]
@@ -56,7 +66,9 @@ class Deployer
       @instances[instance[:instance_id]] = {
           hostname: instance[:hostname], 
           status: instance[:status],
-          dns: instance[:public_dns] }
+          dns: instance[:public_dns],
+          layer_ids: instance[:layer_ids]
+      }
     end
   end
 
@@ -69,17 +81,18 @@ class Deployer
   def deploy
     info "\e[34m" + "Iniciando o deploy" + "\e[0m"
 
-    size = (online_instances.size + 1) / 2
-    instances = online_instances.each_slice(size).to_a
-
-    [0,1].each {|index| deploy_and_wait instances[index]}
+    instances_by_layers.each do |layer_id, instances|
+      size = (instances.size + 1) / 2
+      _instances = instances.each_slice(size).to_a
+      [0,1].each {|index| deploy_and_wait _instances[index]}
+    end
 
     notify_newrelic
 
     info "\e[34m" + "Deploy concluido com sucesso" + "\e[0m"
   end
 
-  private 
+  private
     def deploy_and_wait instances
       info "Executando deploy em #{instances.map{|id, values| values[:hostname]}}"
       deployment_id = deploy_on(instances.map{|id, values| id})
@@ -91,7 +104,7 @@ class Deployer
         exit = (status == 'successful')
       end
 
-      info "Deploy concluido"      
+      info "Deploy concluido"
     end
 
     def deploy_on instance_ids
