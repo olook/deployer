@@ -41,12 +41,13 @@ class Deployer
     get_servers_data
   end
 
-  def online_instances
-    instances.select{|key, values| values[:status] == 'online'}
+  def online_instances(_instances)
+    _instances.select{|values| values[:status] == 'online'}
   end
 
   def instances_by_layers
-    instances.inject({}) do |h, instance|
+    instances.inject({}) do |h, obj|
+      instance = obj.last
       instance[:layer_ids].each do |layer_id|
         h[layer_id] ||= []
         h[layer_id].push(instance)
@@ -64,7 +65,8 @@ class Deployer
     instances = @client.describe_instances({stack_id: STACK_ID})
     instances.data[:instances].each do |instance|
       @instances[instance[:instance_id]] = {
-          hostname: instance[:hostname], 
+          instance_id: instance[:instance_id],
+          hostname: instance[:hostname],
           status: instance[:status],
           dns: instance[:public_dns],
           layer_ids: instance[:layer_ids]
@@ -82,8 +84,9 @@ class Deployer
     info "\e[34m" + "Iniciando o deploy" + "\e[0m"
 
     instances_by_layers.each do |layer_id, instances|
-      size = (instances.size + 1) / 2
-      _instances = instances.each_slice(size).to_a
+      o_instances = online_instances(instances)
+      size = (o_instances.size + 1) / 2
+      _instances = o_instances.each_slice(size).to_a
       [0,1].each {|index| deploy_and_wait _instances[index]}
     end
 
