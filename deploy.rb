@@ -42,7 +42,7 @@ class Deployer
   end
 
   def online_instances(_instances)
-    _instances.select{|values| values[:status] == 'online'}
+    _instances.select{|key, values| values[:status] == 'online'}
   end
 
   def instances_by_layers
@@ -50,7 +50,7 @@ class Deployer
       instance = obj.last
       instance[:layer_ids].each do |layer_id|
         h[layer_id] ||= []
-        h[layer_id].push(instance)
+        h[layer_id].push(obj)
       end
       h
     end
@@ -98,7 +98,7 @@ class Deployer
   private
     def deploy_and_wait instances
       info "Executando deploy em #{instances.map{|id, values| values[:hostname]}}"
-      deployment_id = deploy_on(instances.map{|id, values| id})
+      deployment_id = deploy_on(instances.keys)
 
       exit = false
       while !exit do
