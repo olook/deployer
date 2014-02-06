@@ -98,7 +98,7 @@ class Deployer
   private
     def deploy_and_wait instances
       info "Executando deploy em #{instances.map{|id, values| values[:hostname]}}"
-      deployment_id = deploy_on(instances.keys)
+      deployment_id = deploy_on(instances.map{|id, values| id})
 
       exit = false
       while !exit do
