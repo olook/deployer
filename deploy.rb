@@ -95,7 +95,29 @@ class Deployer
     info "\e[34m" + "Deploy concluido com sucesso" + "\e[0m"
   end
 
+  def deploy_app
+
+    info "\e[34m" + "Iniciando o deploy" + "\e[0m"
+
+      app_instances = online_instances(instances.select{|key, values| values[:hostname] =~ /app/})
+      size = (app_instances.size + 1) / 2
+      _instances = app_instances.each_slice(size).to_a
+      [0,1].each {|index| deploy_and_wait _instances[index]}
+
+    notify_newrelic
+
+    info "\e[34m" + "Deploy concluido com sucesso" + "\e[0m"
+
+  end
+
+  def deploy_resque
+    resque_instances = online_instances(instances.select{|key, values| values[:hostname] =~ /resque/})
+    info "Executando deploy em #{resque_instances.map{|id, values| values[:hostname]}}"
+    deployment_id = deploy_on(resque_instances.keys)
+  end
+
   private
+
     def deploy_and_wait instances
       info "Executando deploy em #{instances.map{|id, values| values[:hostname]}}"
       deployment_id = deploy_on(instances.map{|id, values| id})
@@ -115,7 +137,7 @@ class Deployer
        stack_id: STACK_ID,
        app_id: APP_ID,
        instance_ids: instance_ids,
-       command: {name: 'deploy', args: {}}
+       command: {name: 'deploy', args: {"migrate"=>["true"]}}
       }).data[:deployment_id]
     end
 
@@ -176,7 +198,23 @@ command :run do |c|
     $deployer.deploy
   end
 end
+
+desc "Executa o deploy nas Resques"
+command :resque do |c|
+  c.action do |global_options,options,args|
+    $deployer.deploy_resque
+  end
+end
  
+
+desc "Executa o deploy nas Apps"
+command :app do |c|
+  c.action do |global_options,options,args|
+    $deployer.deploy_app
+  end
+end
+
+
 exit run(ARGV)
 
 # d.send(options[:command])
