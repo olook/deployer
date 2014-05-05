@@ -8,8 +8,8 @@ require 'logger'
 require 'optparse'
 
 
-STACK_ID = 'dbf5f7d3-63ed-4c8c-9e5a-e38dbcadcf75'
-APP_ID = 'a9e36137-e556-457f-ad5a-ef1e5cf4c167'
+STACK_ID = '91a509af-bdb3-4e15-b84c-b2cea73751d9'
+APP_ID = 'b70e95cb-14fd-42cb-a5b4-4cf3b38c0f06'
 AWS.config(:logger => Logger.new($stdout), :log_formatter => AWS::Core::LogFormatter.colored)
 
 class Formater
