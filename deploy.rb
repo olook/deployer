@@ -99,7 +99,7 @@ class Deployer
 
     info "\e[34m" + "Iniciando o deploy" + "\e[0m"
 
-      app_instances = online_instances(instances.select{|key, values| values[:hostname] =~ /app/})
+      app_instances = online_instances(instances.select{|key, values| values[:hostname] !~ /resque/})
       size = (app_instances.size + 1) / 2
       _instances = app_instances.each_slice(size).to_a
       [0,1].each {|index| deploy_and_wait _instances[index]}
